@@ -304,6 +304,8 @@ class Executor:
         # Traverse graph in topological sort order and compute values for all nodes.
         topo_order = find_topo_sort(self.eval_node_list)
         """TODO: Your code here"""
+        for node in topo_order:
+            print(node.name)
 
         # Collect node values.
         node_val_results = [node_to_val_map[node] for node in self.eval_node_list]
@@ -373,3 +375,16 @@ def sum_node_list(node_list):
     from operator import add
     from functools import reduce
     return reduce(add, node_list)
+
+if __name__ == "__main__":
+    x1 = Variable(name = "x1")
+    x2 = Variable(name = "x2")
+    y = x1 * x2 + x1
+    
+    executor = Executor([y])
+    
+    x1_val = 2 * np.ones(3)
+    x2_val = 2 * np.ones(3)
+
+    y_val = executor.run(feed_dict = {x1 : x1_val, x2 : x2_val})
+    # grad_x1, grad_x2 = ad.gradients(y, [x1, x2])
