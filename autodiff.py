@@ -141,11 +141,16 @@ class MulOp(Op):
 
     def compute(self, node, input_vals):
         """Given values of two input nodes, return result of element-wise multiplication."""
-        """TODO: Your code here"""
+        """Your code here"""
+        assert len(input_vals) == 2
+        return input_vals[0] * input_vals[1]
 
     def gradient(self, node, output_grad):
         """Given gradient of multiply node, return gradient contributions to each input."""
-        """TODO: Your code here"""
+        """: Your code here"""
+        A = node.inputs[0]
+        B = node.inputs[1]
+        return [output_grad*B, output_grad*A]
 
 class MulByConstOp(Op):
     """Op to element-wise multiply a nodes by a constant."""
@@ -158,11 +163,14 @@ class MulByConstOp(Op):
 
     def compute(self, node, input_vals):
         """Given values of input node, return result of element-wise multiplication."""
-        """TODO: Your code here"""
+        """: Your code here"""
+        assert len(input_vals) == 1
+        return input_vals[0] * node.const_attr
 
     def gradient(self, node, output_grad):
         """Given gradient of multiplication node, return gradient contribution to input."""
-        """TODO: Your code here"""
+        """: Your code here"""
+        return [output_grad*node.const_attr]
 
 class MatMulOp(Op):
     """Op to matrix multiply two nodes."""
@@ -189,14 +197,29 @@ class MatMulOp(Op):
 
     def compute(self, node, input_vals):
         """Given values of input nodes, return result of matrix multiplication."""
-        """TODO: Your code here"""
+        """: Your code here"""
+        assert len(input_vals) == 2
+        A = input_vals[0]
+        B = ipnut_vals[1]
+        if node.matmul_attr_trans_A:
+            A = np.transpose(A)
+        if node.matmul_attr_trans_B:
+            B = np.transpose(B)
+        return np.matmul(A, B)
 
     def gradient(self, node, output_grad):
         """Given gradient of multiply node, return gradient contributions to each input.
             
         Useful formula: if Y=AB, then dA=dY B^T, dB=A^T dY
         """
-        """TODO: Your code here"""
+        """: Your code here"""
+        A = node.inputs[0]
+        B = node.inputs[1]
+        if node.matmul_attr_trans_A:
+            A = np.transpose(A)
+        if node.matmul_attr_trans_B:
+            B = np.transpose(B)
+        return [output_grad*np.transpose(B), output_grad*np.transpose(A)]
 
 class PlaceholderOp(Op):
     """Op to feed value to a nodes."""
