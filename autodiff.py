@@ -199,8 +199,9 @@ class MatMulOp(Op):
         """Given values of input nodes, return result of matrix multiplication."""
         """: Your code here"""
         assert len(input_vals) == 2
+
         A = input_vals[0]
-        B = ipnut_vals[1]
+        B = input_vals[1]
         if node.matmul_attr_trans_A:
             A = np.transpose(A)
         if node.matmul_attr_trans_B:
@@ -215,12 +216,9 @@ class MatMulOp(Op):
         """: Your code here"""
         A = node.inputs[0]
         B = node.inputs[1]
-        if node.matmul_attr_trans_A:
-            A = np.transpose(A)
-        if node.matmul_attr_trans_B:
-            B = np.transpose(B)
-        return [matmul_op(output_grad, np.transpose(B)), 
-                matmul_op(output_grad, np.transpose(A))]
+        
+        return [matmul_op(output_grad, B, trans_B=True), 
+                matmul_op(A, output_grad, trans_A=True)]
 
 class PlaceholderOp(Op):
     """Op to feed value to a nodes."""
@@ -340,13 +338,17 @@ def gradients(output_node, node_list):
     # Traverse graph in reverse topological order given the output_node that we are taking gradient wrt.
     reverse_topo_order = reversed(find_topo_sort([output_node]))
 
-    """TODO: Your code here"""
+    """: Your code here"""
     for node in reverse_topo_order:
-        if node in node_to_output_grads_list:
-            print(node.name, node_to_output_grads_list[node])
-        # grad = sum_node_list(node_to_output_grads_list[node])
-        # inputs
+        output_grad = sum_node_list(node_to_output_grads_list[node])
+        node_to_output_grad[node] = output_grad
 
+        grad = node.op.gradient(node, output_grad)
+        for idx, input_node in enumerate(node.inputs):
+            if input_node in node_to_output_grads_list:
+                node_to_output_grads_list[input_node].append(grad[idx])
+            else:
+                node_to_output_grads_list[input_node] = [grad[idx]]
 
     # Collect results for gradients requested.
     grad_node_list = [node_to_output_grad[node] for node in node_list]
@@ -390,12 +392,15 @@ if __name__ == "__main__":
     x1 = Variable(name = "x1")
     x2 = Variable(name = "x2")
     y = x1 * x2 + x1
-    
-    executor = Executor([y])
+    grad_x1, grad_x2 = gradients(y, [x1, x2])
+
+    executor = Executor([y, grad_x1, grad_x2])
+
     
     x1_val = 1 * np.ones(3)
     x2_val = 2 * np.ones(3)
 
-    y_val = executor.run(feed_dict = {x1 : x1_val, x2 : x2_val})
+    y_val, grad_x1_val, grad_x2_val = executor.run(feed_dict = {x1 : x1_val, x2 : x2_val})
     print(y_val)
-    grad_x1, grad_x2 = gradients(y, [x1, x2])
+    print(grad_x1_val)
+    print(grad_x2_val)
